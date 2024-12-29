@@ -1,18 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:fl_chart/fl_chart.dart';
 import 'package:provider/provider.dart';
-import 'ecg_parser.dart';
+import 'package:fl_chart/fl_chart.dart';
+import 'parser.dart';
 import 'providers.dart';
 
 class ECGPlot extends StatefulWidget {
   final Ecg ecg;
   final String? selectedChannel;
 
-  const ECGPlot({
-    super.key,
-    required this.ecg,
-    this.selectedChannel,
-  });
+  const ECGPlot({required this.ecg, this.selectedChannel, Key? key})
+      : super(key: key);
 
   @override
   _ECGPlotState createState() => _ECGPlotState();
@@ -24,40 +21,30 @@ class _ECGPlotState extends State<ECGPlot> {
   @override
   void initState() {
     super.initState();
-    _spots = _generateSpots(
-        widget.ecg.data,
-        widget.selectedChannel ??
-            context.read<EcgPlotSettings>().selectedChannel,
-        context.read<EcgPlotSettings>().step);
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    context.watch<EcgPlotSettings>().addListener(_updateRange);
-  }
-
-  @override
-  void dispose() {
-    context.read<EcgPlotSettings>().removeListener(_updateRange);
-    super.dispose();
-  }
-
-  void _updateRange() {
-    setState(() {
-      _spots = _generateSpots(
-          widget.ecg.data,
-          widget.selectedChannel ??
-              context.read<EcgPlotSettings>().selectedChannel,
-          context.read<EcgPlotSettings>().step);
+    _spots =
+        _generateSpots(widget.ecg.data, context.read<EcgPlotSettings>().step);
+    context.read<EcgPlotSettings>().addListener(() {
+      setState(() {
+        _spots = _generateSpots(
+            widget.ecg.data, context.read<EcgPlotSettings>().step);
+      });
     });
   }
 
-  List<FlSpot> _generateSpots(
-      List<Map<String, double>> data, String channel, int step) {
+  @override
+  void setState(fn) {
+    if (mounted) {
+      super.setState(fn);
+    }
+  }
+
+  List<FlSpot> _generateSpots(List<Map<String, double>> data, int step) {
     return List<FlSpot>.generate(
       data.length ~/ step,
-      (i) => FlSpot(i * step.toDouble(), data[i * step][channel]!),
+      (i) => FlSpot(
+          i * step.toDouble(),
+          data[i * step][widget.selectedChannel ??
+              context.read<EcgPlotSettings>().selectedChannel]!),
     );
   }
 
@@ -67,41 +54,19 @@ class _ECGPlotState extends State<ECGPlot> {
   }
 
   void _onPanUpdate(DragUpdateDetails details) {
-    final ecgPlotSettings = context.read<EcgPlotSettings>();
-    setState(() {
-      final deltaX =
-          details.primaryDelta! / context.size!.width * ecgPlotSettings.range;
-      double newMinX = ecgPlotSettings.minX - deltaX;
-      double newMaxX = ecgPlotSettings.maxX - deltaX;
-
-      // Ensure the plot is always contained within the chart
-      if (newMinX < 0) {
-        newMinX = 0;
-        newMaxX = ecgPlotSettings.range;
-      }
-      if (newMaxX > widget.ecg.data.length.toDouble()) {
-        newMaxX = widget.ecg.data.length.toDouble();
-        newMinX = newMaxX - ecgPlotSettings.range;
-      }
-
-      ecgPlotSettings.setMinX(newMinX);
-      ecgPlotSettings.setMaxX(newMaxX);
-    });
+    final deltaX = details.primaryDelta! /
+        context.size!.width *
+        (context.read<EcgPlotSettings>().maxX -
+            context.read<EcgPlotSettings>().minX);
+    context.read<EcgPlotSettings>().moveRange(-deltaX);
   }
 
   @override
   Widget build(BuildContext context) {
     final sampleRate =
         _parseSampleRate(widget.ecg.header.generalHeader['Sample Rate'] ?? '1');
-    final step = context.watch<EcgPlotSettings>().step;
     final minX = context.watch<EcgPlotSettings>().minX;
     final maxX = context.watch<EcgPlotSettings>().maxX;
-
-    _spots = _generateSpots(
-        widget.ecg.data,
-        widget.selectedChannel ??
-            context.read<EcgPlotSettings>().selectedChannel,
-        step);
 
     return Column(
       children: [
@@ -136,73 +101,70 @@ class _ECGPlotState extends State<ECGPlot> {
       ],
     );
   }
+}
 
-  FlTitlesData _buildTitlesData(double sampleRate) {
-    return FlTitlesData(
-      topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-      rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-      leftTitles: AxisTitles(
-        axisNameWidget: Text(
-          'Voltage [mV]',
-          style: const TextStyle(color: Colors.white),
-        ),
-        sideTitles: SideTitles(
-          showTitles: true,
-          getTitlesWidget: (value, meta) {
-            final scaledValue = value / 1000;
-            return Text(
-              scaledValue.toStringAsFixed(1),
-              style: const TextStyle(color: Colors.white, fontSize: 10),
-            );
-          },
-        ),
+FlTitlesData _buildTitlesData(double sampleRate) {
+  return FlTitlesData(
+    topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+    rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+    leftTitles: AxisTitles(
+      axisNameWidget: Text(
+        'Voltage [mV]',
+        style: const TextStyle(color: Colors.white),
       ),
-      bottomTitles: AxisTitles(
-        axisNameWidget: Text(
-          'Time [s]',
-          style: const TextStyle(color: Colors.white),
-        ),
-        sideTitles: SideTitles(
-          showTitles: true,
-          getTitlesWidget: (value, meta) {
-            final scaledValue = value / sampleRate;
-            return SideTitleWidget(
-              axisSide: AxisSide.bottom,
-              child: Text(
-                scaledValue.toStringAsFixed(2),
-                style: const TextStyle(color: Colors.white, fontSize: 12),
-              ),
-            );
-          },
-        ),
+      sideTitles: SideTitles(
+        showTitles: true,
+        getTitlesWidget: (value, meta) {
+          final scaledValue = value / 10000;
+          return Text(
+            scaledValue.toStringAsFixed(1),
+            style: const TextStyle(color: Colors.white),
+          );
+        },
       ),
-    );
-  }
+    ),
+    bottomTitles: AxisTitles(
+      axisNameWidget: Text(
+        'Time [s]',
+        style: const TextStyle(color: Colors.white),
+      ),
+      sideTitles: SideTitles(
+        showTitles: true,
+        getTitlesWidget: (value, meta) {
+          final scaledValue = value / sampleRate;
+          return Text(
+            scaledValue.toStringAsFixed(1),
+            style: const TextStyle(color: Colors.white),
+          );
+        },
+      ),
+    ),
+  );
+}
 
-  FlBorderData _buildBorderData() {
-    return FlBorderData(
-      show: true,
-      border: Border.all(color: Colors.white),
-    );
-  }
+FlBorderData _buildBorderData() {
+  return FlBorderData(
+    show: true,
+    border: Border.all(color: Colors.white, width: 1),
+  );
+}
 
-  FlGridData _buildGridData() {
-    return FlGridData(
-      show: true,
-      drawVerticalLine: true,
-      drawHorizontalLine: true,
-      getDrawingHorizontalLine: (value) {
-        return FlLine(
-          color: Colors.white.withOpacity(0.2),
-          strokeWidth: 1,
-        );
-      },
-      getDrawingVerticalLine: (value) {
-        return FlLine(
-          color: Colors.white.withOpacity(0.2),
-          strokeWidth: 1,
-        );
-      },
-    );
-  }
+FlGridData _buildGridData() {
+  return FlGridData(
+    show: true,
+    drawVerticalLine: true,
+    drawHorizontalLine: true,
+    getDrawingHorizontalLine: (value) {
+      return FlLine(
+        color: Colors.white.withOpacity(0.2),
+        strokeWidth: 1,
+      );
+    },
+    getDrawingVerticalLine: (value) {
+      return FlLine(
+        color: Colors.white.withOpacity(0.2),
+        strokeWidth: 1,
+      );
+    },
+  );
 }

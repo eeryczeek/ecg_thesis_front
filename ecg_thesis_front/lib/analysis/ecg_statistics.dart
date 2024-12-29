@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
-class ECGStatistics extends StatelessWidget {
-  final List<Map<String, double>> ecgData;
+import '../providers.dart';
 
-  const ECGStatistics({super.key, required this.ecgData});
+class HeaderInformation extends StatelessWidget {
+  const HeaderInformation({super.key});
 
   @override
   Widget build(BuildContext context) {
-    if (ecgData.isEmpty) {
+    if (context.watch<FileDataProvider>().ecg.header.generalHeader.isEmpty) {
       return const Center(
         child: Text(
           'No data available',
@@ -16,8 +17,13 @@ class ECGStatistics extends StatelessWidget {
       );
     }
 
-    final channel = ecgData.first.keys.first;
-    final values = ecgData.map((data) => data[channel]!).toList();
+    final channel = context.watch<EcgPlotSettings>().selectedChannel;
+    final values = context
+        .watch<FileDataProvider>()
+        .ecg
+        .data
+        .map((data) => data[channel]!)
+        .toList();
     final minValue = values.reduce((a, b) => a < b ? a : b);
     final maxValue = values.reduce((a, b) => a > b ? a : b);
     final avgValue = values.reduce((a, b) => a + b) / values.length;

@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dropzone/flutter_dropzone.dart';
 import 'package:provider/provider.dart';
 import '../providers.dart';
-import '../ecg_parser.dart';
+import '../parser.dart';
 import '../ecg_plot.dart';
 
 class ECGDropzonePlot extends StatefulWidget {
@@ -21,12 +21,12 @@ class _ECGDropzonePlotState extends State<ECGDropzonePlot> {
     final content = utf8.decode(fileData);
     final parser = ECGTxtParser();
     final ecg = await parser.parse(content);
-    Provider.of<ECGDataProvider>(context, listen: false).updateEcgFile(ecg);
+    Provider.of<FileDataProvider>(context, listen: false).updateEcgFile(ecg);
   }
 
   @override
   Widget build(BuildContext context) {
-    final ecgDataProvider = Provider.of<ECGDataProvider>(context);
+    final ecgDataProvider = Provider.of<FileDataProvider>(context);
 
     return Container(
       decoration: BoxDecoration(

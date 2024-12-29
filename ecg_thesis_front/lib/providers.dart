@@ -1,34 +1,31 @@
 import 'package:flutter/material.dart';
-import 'ecg_parser.dart';
+import 'parser.dart';
 
-class ECGDataProvider extends ChangeNotifier {
+class FileDataProvider extends ChangeNotifier {
   Ecg _ecg = Ecg(EcgHeader({}, {}), []);
+  double _sampleRate = 1;
 
   Ecg get ecg => _ecg;
+  double get sampleRate => _sampleRate;
 
   void updateEcgFile(Ecg newEcg) {
     _ecg = newEcg;
+    _sampleRate =
+        _parseSampleRate(_ecg.header.generalHeader['Sample Rate'] ?? '1');
     notifyListeners();
   }
 }
 
 class EcgPlotSettings extends ChangeNotifier {
-  double _range = 100;
-  int _step = 1;
   String _selectedChannel = 'I';
+  int _step = 1;
   double _minX = 0;
-  double _maxX = 100;
+  double _maxX = 2000;
 
-  double get range => _range;
   int get step => _step;
   String get selectedChannel => _selectedChannel;
   double get minX => _minX;
   double get maxX => _maxX;
-
-  void setRange(double newRange) {
-    _range = newRange;
-    notifyListeners();
-  }
 
   void setStep(int newStep) {
     _step = newStep;
@@ -40,13 +37,27 @@ class EcgPlotSettings extends ChangeNotifier {
     notifyListeners();
   }
 
-  void setMinX(double newMinX) {
-    _minX = newMinX;
+  void setRange(double newRange) {
+    _maxX = _minX + newRange;
     notifyListeners();
   }
 
-  void setMaxX(double newMaxX) {
-    _maxX = newMaxX;
+  void moveRange(double deltaX) {
+    _minX += deltaX;
+    _maxX += deltaX;
     notifyListeners();
   }
+
+  void resetToDefault() {
+    _selectedChannel = 'I';
+    _step = 1;
+    _minX = 0;
+    _maxX = 2000;
+    notifyListeners();
+  }
+}
+
+double _parseSampleRate(String sampleRateString) {
+  final match = RegExp(r'(\d+)').firstMatch(sampleRateString);
+  return match != null ? double.parse(match.group(0)!) : 1.0;
 }
