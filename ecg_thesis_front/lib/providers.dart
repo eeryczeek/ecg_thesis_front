@@ -1,17 +1,56 @@
 import 'package:flutter/material.dart';
 import 'parser.dart';
 
-class FileDataProvider extends ChangeNotifier {
+class OriginalEcgProvider extends ChangeNotifier {
   Ecg _ecg = Ecg(EcgHeader({}, {}), []);
   double _sampleRate = 1;
+  double _minY = 0;
+  double _maxY = 0;
 
   Ecg get ecg => _ecg;
   double get sampleRate => _sampleRate;
+  double get minY => _minY;
+  double get maxY => _maxY;
 
-  void updateEcgFile(Ecg newEcg) {
+  void update(Ecg newEcg) {
     _ecg = newEcg;
     _sampleRate =
         _parseSampleRate(_ecg.header.generalHeader['Sample Rate'] ?? '1');
+    _minY = _ecg.data
+        .map((e) => e.values
+            .reduce((value, element) => value < element ? value : element))
+        .reduce((value, element) => value < element ? value : element);
+    _maxY = _ecg.data
+        .map((e) => e.values
+            .reduce((value, element) => value > element ? value : element))
+        .reduce((value, element) => value > element ? value : element);
+    notifyListeners();
+  }
+}
+
+class AnalysedEcgProvider extends ChangeNotifier {
+  Ecg _ecg = Ecg(EcgHeader({}, {}), []);
+  double _sampleRate = 1;
+  double _minY = 0;
+  double _maxY = 0;
+
+  Ecg get ecg => _ecg;
+  double get sampleRate => _sampleRate;
+  double get minY => _minY;
+  double get maxY => _maxY;
+
+  void update(Ecg newEcg) {
+    _ecg = newEcg;
+    _sampleRate =
+        _parseSampleRate(_ecg.header.generalHeader['Sample Rate'] ?? '1');
+    _minY = _ecg.data
+        .map((e) => e.values
+            .reduce((value, element) => value < element ? value : element))
+        .reduce((value, element) => value < element ? value : element);
+    _maxY = _ecg.data
+        .map((e) => e.values
+            .reduce((value, element) => value > element ? value : element))
+        .reduce((value, element) => value > element ? value : element);
     notifyListeners();
   }
 }

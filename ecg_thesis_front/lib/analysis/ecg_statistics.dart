@@ -8,50 +8,27 @@ class HeaderInformation extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (context.watch<FileDataProvider>().ecg.header.generalHeader.isEmpty) {
-      return const Center(
+    return Container(
+      width: double.infinity,
+      height: 200,
+      padding: const EdgeInsets.all(8.0),
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.white),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: SingleChildScrollView(
         child: Text(
-          'No data available',
-          style: TextStyle(color: Colors.white),
+          context
+              .read<OriginalEcgProvider>()
+              .ecg
+              .header
+              .generalHeader
+              .entries
+              .map((entry) => '${entry.key}: ${entry.value}\n')
+              .join(),
+          style: Theme.of(context).textTheme.bodyMedium,
         ),
-      );
-    }
-
-    final channel = context.watch<EcgPlotSettings>().selectedChannel;
-    final values = context
-        .watch<FileDataProvider>()
-        .ecg
-        .data
-        .map((data) => data[channel]!)
-        .toList();
-    final minValue = values.reduce((a, b) => a < b ? a : b);
-    final maxValue = values.reduce((a, b) => a > b ? a : b);
-    final avgValue = values.reduce((a, b) => a + b) / values.length;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Statistics for channel: $channel',
-          style: Theme.of(context)
-              .textTheme
-              .headlineSmall
-              ?.copyWith(color: Colors.white),
-        ),
-        const SizedBox(height: 10),
-        Text(
-          'Min Value: $minValue',
-          style: const TextStyle(color: Colors.white),
-        ),
-        Text(
-          'Max Value: $maxValue',
-          style: const TextStyle(color: Colors.white),
-        ),
-        Text(
-          'Average Value: $avgValue',
-          style: const TextStyle(color: Colors.white),
-        ),
-      ],
+      ),
     );
   }
 }

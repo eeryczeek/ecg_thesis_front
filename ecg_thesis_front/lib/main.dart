@@ -15,7 +15,8 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (context) => FileDataProvider()),
+        ChangeNotifierProvider(create: (context) => OriginalEcgProvider()),
+        ChangeNotifierProvider(create: (context) => AnalysedEcgProvider()),
         ChangeNotifierProvider(create: (context) => EcgPlotSettings()),
       ],
       child: MaterialApp(

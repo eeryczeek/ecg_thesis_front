@@ -21,12 +21,12 @@ class _ECGDropzonePlotState extends State<ECGDropzonePlot> {
     final content = utf8.decode(fileData);
     final parser = ECGTxtParser();
     final ecg = await parser.parse(content);
-    Provider.of<FileDataProvider>(context, listen: false).updateEcgFile(ecg);
+    Provider.of<OriginalEcgProvider>(context, listen: false).update(ecg);
   }
 
   @override
   Widget build(BuildContext context) {
-    final ecgDataProvider = Provider.of<FileDataProvider>(context);
+    final ecgDataProvider = Provider.of<OriginalEcgProvider>(context);
 
     return Container(
       decoration: BoxDecoration(
@@ -55,8 +55,7 @@ class _ECGDropzonePlotState extends State<ECGDropzonePlot> {
                 textAlign: TextAlign.center,
               ),
             ),
-          if (ecgDataProvider.ecg.data.isNotEmpty)
-            ECGPlot(ecg: ecgDataProvider.ecg),
+          if (ecgDataProvider.ecg.data.isNotEmpty) ECGPlot(),
         ],
       ),
     );

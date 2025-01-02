@@ -10,7 +10,7 @@ class VisualizationsTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ecgDataProvider = Provider.of<FileDataProvider>(context);
+    final ecgDataProvider = Provider.of<OriginalEcgProvider>(context);
 
     return Column(
       children: [
@@ -27,7 +27,7 @@ class VisualizationsTab extends StatelessWidget {
                     gridDelegate:
                         const SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 4,
-                      childAspectRatio: 1.5,
+                      childAspectRatio: 2,
                     ),
                     itemCount: ecgDataProvider.ecg.data.first.keys.length,
                     itemBuilder: (context, index) {
@@ -36,10 +36,7 @@ class VisualizationsTab extends StatelessWidget {
                           .elementAt(index);
                       return Padding(
                         padding: const EdgeInsets.all(8.0),
-                        child: ECGPlot(
-                          ecg: ecgDataProvider.ecg,
-                          selectedChannel: channel,
-                        ),
+                        child: ECGPlot(selectedChannel: channel),
                       );
                     },
                   ),

@@ -14,7 +14,7 @@ class ControlPanel extends StatelessWidget {
           onPressed: () {
             context
                 .read<EcgPlotSettings>()
-                .setRange(2 * context.read<FileDataProvider>().sampleRate);
+                .setRange(2 * context.read<OriginalEcgProvider>().sampleRate);
           },
           child: Text('2s'),
         ),
@@ -23,7 +23,7 @@ class ControlPanel extends StatelessWidget {
           onPressed: () {
             context
                 .read<EcgPlotSettings>()
-                .setRange(4 * context.read<FileDataProvider>().sampleRate);
+                .setRange(4 * context.read<OriginalEcgProvider>().sampleRate);
           },
           child: Text('4s'),
         ),
@@ -32,7 +32,7 @@ class ControlPanel extends StatelessWidget {
           onPressed: () {
             context
                 .read<EcgPlotSettings>()
-                .setRange(8 * context.read<FileDataProvider>().sampleRate);
+                .setRange(8 * context.read<OriginalEcgProvider>().sampleRate);
           },
           child: Text('8s'),
         ),
@@ -82,7 +82,7 @@ class _ChannelSelection extends StatelessWidget {
         DropdownButton<String>(
           value: context.watch<EcgPlotSettings>().selectedChannel,
           items: context
-              .read<FileDataProvider>()
+              .read<OriginalEcgProvider>()
               .ecg
               .header
               .channelHeaders

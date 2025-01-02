@@ -6,6 +6,38 @@ class Ecg {
   final List<Map<String, double>> data;
 
   Ecg(this.header, this.data);
+
+  @override
+  String toString() {
+    final buffer = StringBuffer();
+
+    buffer.writeln('[Header]');
+
+    header.generalHeader.forEach((key, value) {
+      buffer.writeln('$key: $value');
+    });
+
+    header.channelHeaders.forEach((channel, channelHeader) {
+      buffer.writeln('Channel #$channel');
+      channelHeader.header.forEach((key, value) {
+        buffer.writeln('$key: $value');
+      });
+    });
+
+    buffer.writeln('\n[Data]');
+    final csvConverter = ListToCsvConverter();
+    for (var dataRow in data) {
+      final row =
+          header.channelHeaders.keys.map((key) => dataRow[key]).toList();
+      buffer.writeln(csvConverter.convert([row]));
+    }
+
+    final bufferString = buffer.toString();
+    final lines = bufferString.split('\n');
+    final limitedOutput = lines.take(300).join('\n');
+    print(limitedOutput);
+    return buffer.toString();
+  }
 }
 
 class EcgHeader {

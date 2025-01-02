@@ -1,15 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'parser.dart';
 import 'providers.dart';
 
 class ECGPlot extends StatefulWidget {
-  final Ecg ecg;
   final String? selectedChannel;
 
-  const ECGPlot({required this.ecg, this.selectedChannel, Key? key})
-      : super(key: key);
+  const ECGPlot({this.selectedChannel, super.key});
 
   @override
   _ECGPlotState createState() => _ECGPlotState();
@@ -21,12 +18,12 @@ class _ECGPlotState extends State<ECGPlot> {
   @override
   void initState() {
     super.initState();
-    _spots =
-        _generateSpots(widget.ecg.data, context.read<EcgPlotSettings>().step);
+    _spots = _generateSpots(context.read<OriginalEcgProvider>().ecg.data,
+        context.read<EcgPlotSettings>().step);
     context.read<EcgPlotSettings>().addListener(() {
       setState(() {
-        _spots = _generateSpots(
-            widget.ecg.data, context.read<EcgPlotSettings>().step);
+        _spots = _generateSpots(context.read<OriginalEcgProvider>().ecg.data,
+            context.read<EcgPlotSettings>().step);
       });
     });
   }
@@ -63,8 +60,12 @@ class _ECGPlotState extends State<ECGPlot> {
 
   @override
   Widget build(BuildContext context) {
-    final sampleRate =
-        _parseSampleRate(widget.ecg.header.generalHeader['Sample Rate'] ?? '1');
+    final sampleRate = _parseSampleRate(context
+            .read<OriginalEcgProvider>()
+            .ecg
+            .header
+            .generalHeader['Sample Rate'] ??
+        '1');
     final minX = context.watch<EcgPlotSettings>().minX;
     final maxX = context.watch<EcgPlotSettings>().maxX;
 
@@ -91,6 +92,8 @@ class _ECGPlotState extends State<ECGPlot> {
                 backgroundColor: Colors.black,
                 minX: minX,
                 maxX: maxX,
+                minY: context.read<OriginalEcgProvider>().minY,
+                maxY: context.read<OriginalEcgProvider>().maxY,
                 borderData: _buildBorderData(),
                 gridData: _buildGridData(),
                 lineTouchData: LineTouchData(enabled: false),
