@@ -2,13 +2,17 @@ import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_dropzone/flutter_dropzone.dart';
-import 'package:provider/provider.dart';
-import '../providers.dart';
 import '../parser.dart';
 import '../ecg_plot.dart';
+import '../providers.dart';
 
 class ECGDropzonePlot extends StatefulWidget {
-  const ECGDropzonePlot({super.key});
+  final EcgProvider provider;
+
+  const ECGDropzonePlot({
+    super.key,
+    required this.provider,
+  });
 
   @override
   _ECGDropzonePlotState createState() => _ECGDropzonePlotState();
@@ -21,18 +25,16 @@ class _ECGDropzonePlotState extends State<ECGDropzonePlot> {
     final content = utf8.decode(fileData);
     final parser = ECGTxtParser();
     final ecg = await parser.parse(content);
-    Provider.of<OriginalEcgProvider>(context, listen: false).update(ecg);
+    widget.provider.update({"original": ecg});
   }
 
   @override
   Widget build(BuildContext context) {
-    final ecgDataProvider = Provider.of<OriginalEcgProvider>(context);
-
     return Container(
       decoration: BoxDecoration(
         border: Border.all(color: Colors.black),
         borderRadius: BorderRadius.circular(10),
-        color: ecgDataProvider.ecg.data.isEmpty
+        color: widget.provider.ecgs["original"] == null
             ? Colors.grey.shade800
             : Colors.black,
       ),
@@ -47,7 +49,7 @@ class _ECGDropzonePlotState extends State<ECGDropzonePlot> {
               _handleFileDrop(file);
             },
           ),
-          if (ecgDataProvider.ecg.data.isEmpty)
+          if (widget.provider.ecgs["original"] == null)
             Center(
               child: Text(
                 'Drop your ECG recording file here:',
@@ -55,7 +57,8 @@ class _ECGDropzonePlotState extends State<ECGDropzonePlot> {
                 textAlign: TextAlign.center,
               ),
             ),
-          if (ecgDataProvider.ecg.data.isNotEmpty) ECGPlot(),
+          if (widget.provider.ecgs["original"] != null)
+            ECGPlot(provider: widget.provider),
         ],
       ),
     );

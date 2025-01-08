@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'providers.dart';
 
 class ECGPlot extends StatefulWidget {
-  final String? selectedChannel;
+  final EcgProvider provider;
+  final String? channel;
 
-  const ECGPlot({this.selectedChannel, super.key});
+  const ECGPlot({required this.provider, this.channel, super.key});
 
   @override
   _ECGPlotState createState() => _ECGPlotState();
@@ -18,12 +18,13 @@ class _ECGPlotState extends State<ECGPlot> {
   @override
   void initState() {
     super.initState();
-    _spots = _generateSpots(context.read<OriginalEcgProvider>().ecg.data,
-        context.read<EcgPlotSettings>().step);
-    context.read<EcgPlotSettings>().addListener(() {
+    _spots = _generateSpots(widget.provider.ecgs[widget.provider.source]!.data,
+        widget.provider.resolution);
+    widget.provider.addListener(() {
       setState(() {
-        _spots = _generateSpots(context.read<OriginalEcgProvider>().ecg.data,
-            context.read<EcgPlotSettings>().step);
+        _spots = _generateSpots(
+            widget.provider.ecgs[widget.provider.source]!.data,
+            widget.provider.resolution);
       });
     });
   }
@@ -38,10 +39,8 @@ class _ECGPlotState extends State<ECGPlot> {
   List<FlSpot> _generateSpots(List<Map<String, double>> data, int step) {
     return List<FlSpot>.generate(
       data.length ~/ step,
-      (i) => FlSpot(
-          i * step.toDouble(),
-          data[i * step][widget.selectedChannel ??
-              context.read<EcgPlotSettings>().selectedChannel]!),
+      (i) => FlSpot(i * step.toDouble(),
+          data[i * step][widget.channel ?? widget.provider.channel]!),
     );
   }
 
@@ -53,21 +52,47 @@ class _ECGPlotState extends State<ECGPlot> {
   void _onPanUpdate(DragUpdateDetails details) {
     final deltaX = details.primaryDelta! /
         context.size!.width *
-        (context.read<EcgPlotSettings>().maxX -
-            context.read<EcgPlotSettings>().minX);
-    context.read<EcgPlotSettings>().moveRange(-deltaX);
+        (widget.provider.maxX - widget.provider.minX);
+    widget.provider.moveRange(-deltaX);
+  }
+
+  List<VerticalRangeAnnotation> _generateQRSAnnotations(
+      double minX, double maxX) {
+    return widget.provider.qrsSlices
+        .where((qrs) => qrs.Q.toDouble() >= minX && qrs.S.toDouble() <= maxX)
+        .map((qrs) {
+      return VerticalRangeAnnotation(
+        x1: qrs.Q.toDouble(),
+        x2: qrs.S.toDouble(),
+        color: Colors.greenAccent.withOpacity(0.23),
+      );
+    }).toList();
   }
 
   @override
   Widget build(BuildContext context) {
-    final sampleRate = _parseSampleRate(context
-            .read<OriginalEcgProvider>()
-            .ecg
+    final sampleRate = _parseSampleRate(widget
+            .provider
+            .ecgs[widget.provider.source]!
             .header
             .generalHeader['Sample Rate'] ??
         '1');
-    final minX = context.watch<EcgPlotSettings>().minX;
-    final maxX = context.watch<EcgPlotSettings>().maxX;
+    final minX = widget.provider.minX;
+    final maxX = widget.provider.maxX;
+
+    double minY = 0;
+    double maxY = 0;
+
+    if (widget.provider.ecgs[widget.provider.source]!.data.isNotEmpty) {
+      minY = widget.provider.ecgs[widget.provider.source]!.data
+          .map((e) => e.values
+              .reduce((value, element) => value < element ? value : element))
+          .reduce((value, element) => value < element ? value : element);
+      maxY = widget.provider.ecgs[widget.provider.source]!.data
+          .map((e) => e.values
+              .reduce((value, element) => value > element ? value : element))
+          .reduce((value, element) => value > element ? value : element);
+    }
 
     return Column(
       children: [
@@ -92,11 +117,14 @@ class _ECGPlotState extends State<ECGPlot> {
                 backgroundColor: Colors.black,
                 minX: minX,
                 maxX: maxX,
-                minY: context.read<OriginalEcgProvider>().minY,
-                maxY: context.read<OriginalEcgProvider>().maxY,
+                minY: minY,
+                maxY: maxY,
                 borderData: _buildBorderData(),
                 gridData: _buildGridData(),
                 lineTouchData: LineTouchData(enabled: false),
+                rangeAnnotations: RangeAnnotations(
+                  verticalRangeAnnotations: _generateQRSAnnotations(minX, maxX),
+                ),
               ),
             ),
           ),

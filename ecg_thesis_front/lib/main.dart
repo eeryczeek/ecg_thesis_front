@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'pacemaker_impact/pacemaker_impact_tab.dart';
 import 'providers.dart';
 import 'visualizations/visualizations_tab.dart';
 import 'analysis/analysis_tab.dart';
@@ -15,14 +16,15 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (context) => OriginalEcgProvider()),
-        ChangeNotifierProvider(create: (context) => AnalysedEcgProvider()),
-        ChangeNotifierProvider(create: (context) => EcgPlotSettings()),
+        ChangeNotifierProvider(create: (context) => AnalysisEcgProvider()),
+        ChangeNotifierProvider(create: (context) => EcgBeforeProvider()),
+        ChangeNotifierProvider(create: (context) => EcgAfterProvider()),
       ],
       child: MaterialApp(
+        debugShowCheckedModeBanner: false,
         title: 'ECG Analysis',
         theme: ThemeData.dark().copyWith(
-          colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+          colorScheme: ColorScheme.fromSeed(seedColor: Colors.green),
         ),
         home: const MyHomePage(title: 'ECG Analysis'),
       ),
@@ -46,7 +48,7 @@ class _MyHomePageState extends State<MyHomePage>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
   }
 
   @override
@@ -58,15 +60,17 @@ class _MyHomePageState extends State<MyHomePage>
           controller: _tabController,
           tabs: const [
             Tab(text: 'Analysis'),
+            Tab(text: 'Pacemaker Impact'),
             Tab(text: 'Visualizations'),
           ],
         ),
       ),
       body: TabBarView(
         controller: _tabController,
-        children: const [
-          AnalysisTab(),
-          VisualizationsTab(),
+        children: [
+          const AnalysisTab(),
+          const PacemakerImpactTab(),
+          const VisualizationsTab(),
         ],
       ),
     );

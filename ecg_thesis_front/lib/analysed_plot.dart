@@ -18,12 +18,14 @@ class _AnalysedPlotState extends State<AnalysedPlot> {
   @override
   void initState() {
     super.initState();
-    _spots = _generateSpots(context.read<AnalysedEcgProvider>().ecg.data,
-        context.read<EcgPlotSettings>().step);
-    context.read<AnalysedEcgProvider>().addListener(() {
+    _spots = _generateSpots(
+        context.read<AnalysisEcgProvider>().ecgs["original"]!.data,
+        context.read<AnalysisEcgProvider>().resolution);
+    context.read<AnalysisEcgProvider>().addListener(() {
       setState(() {
-        _spots = _generateSpots(context.read<AnalysedEcgProvider>().ecg.data,
-            context.read<EcgPlotSettings>().step);
+        _spots = _generateSpots(
+            context.read<AnalysisEcgProvider>().ecgs["original"]!.data,
+            context.read<AnalysisEcgProvider>().resolution);
       });
     });
   }
@@ -32,15 +34,15 @@ class _AnalysedPlotState extends State<AnalysedPlot> {
     return List<FlSpot>.generate(
       data.length ~/ step,
       (i) => FlSpot(i * step.toDouble(),
-          data[i * step][context.read<EcgPlotSettings>().selectedChannel]!),
+          data[i * step][context.read<AnalysisEcgProvider>().channel]!),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final sampleRate = context.read<AnalysedEcgProvider>().sampleRate;
-    final minX = context.watch<EcgPlotSettings>().minX;
-    final maxX = context.watch<EcgPlotSettings>().maxX;
+    final sampleRate = context.read<AnalysisEcgProvider>().sampleRate;
+    final minX = context.watch<AnalysisEcgProvider>().minX;
+    final maxX = context.watch<AnalysisEcgProvider>().maxX;
 
     return Column(
       children: [

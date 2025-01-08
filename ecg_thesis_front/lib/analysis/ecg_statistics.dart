@@ -16,18 +16,47 @@ class HeaderInformation extends StatelessWidget {
         border: Border.all(color: Colors.white),
         borderRadius: BorderRadius.circular(10),
       ),
-      child: SingleChildScrollView(
-        child: Text(
-          context
-              .read<OriginalEcgProvider>()
-              .ecg
-              .header
-              .generalHeader
-              .entries
-              .map((entry) => '${entry.key}: ${entry.value}\n')
-              .join(),
-          style: Theme.of(context).textTheme.bodyMedium,
-        ),
+      child: Row(
+        children: [
+          Expanded(
+            child: SingleChildScrollView(
+              child: Consumer<AnalysisEcgProvider>(
+                builder: (context, originalEcgProvider, child) {
+                  return Text(
+                    originalEcgProvider
+                        .ecgs["original"]!.header.generalHeader.entries
+                        .map((entry) => '${entry.key}: ${entry.value}\n')
+                        .join(),
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  );
+                },
+              ),
+            ),
+          ),
+          Expanded(
+            child: SingleChildScrollView(
+              child: Consumer<AnalysisEcgProvider>(
+                builder: (context, analysisEcgProvider, child) {
+                  final selectedChannel = analysisEcgProvider.channel;
+                  final channelHeader = analysisEcgProvider
+                      .ecgs["original"]!.header.channelHeaders[selectedChannel];
+                  if (channelHeader == null) {
+                    return Text(
+                      'No data for selected channel',
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    );
+                  }
+                  return Text(
+                    channelHeader.header.entries
+                        .map((entry) => '${entry.key}: ${entry.value}\n')
+                        .join(),
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  );
+                },
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

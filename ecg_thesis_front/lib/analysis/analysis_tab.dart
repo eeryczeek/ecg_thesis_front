@@ -1,6 +1,5 @@
 // FILE: lib/analysis/analysis_tab.dart
 
-import 'package:ecg_thesis_front/parser.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../api_service.dart';
@@ -33,7 +32,7 @@ class _AnalysisTabState extends State<AnalysisTab> {
                   children: [
                     Padding(
                       padding: const EdgeInsets.all(20.0),
-                      child: ECGDropzonePlot(),
+                      child: ECGDropzonePlot(provider: AnalysisEcgProvider()),
                     ),
                   ],
                 ),
@@ -47,7 +46,9 @@ class _AnalysisTabState extends State<AnalysisTab> {
                     children: [
                       Padding(
                         padding: const EdgeInsets.all(20.0),
-                        child: ControlPanel(),
+                        child: ControlPanel(
+                          provider: AnalysisEcgProvider(),
+                        ),
                       ),
                       Text(
                         'Additional Information:',
@@ -59,16 +60,10 @@ class _AnalysisTabState extends State<AnalysisTab> {
                       ElevatedButton(
                         onPressed: () async {
                           final originalEcgProvider =
-                              context.read<OriginalEcgProvider>();
-                          final analysedEcgProvider =
-                              context.read<AnalysedEcgProvider>();
-
-                          final result = await apiService
-                              .requestAnalysis(originalEcgProvider.ecg);
-                          final parsedEcg = await ECGTxtParser().parse(result);
-
-                          if (!mounted) return;
-                          analysedEcgProvider.update(parsedEcg);
+                              context.read<AnalysisEcgProvider>();
+                          final result = await apiService.requestAnalysis(
+                              originalEcgProvider.ecgs["original"]!);
+                          originalEcgProvider.update(result);
                         },
                         child: const Text('Request Analysis'),
                       )
@@ -78,7 +73,11 @@ class _AnalysisTabState extends State<AnalysisTab> {
               ),
             ],
           ),
-          if (context.watch<AnalysedEcgProvider>().ecg.data.isNotEmpty)
+          if (context
+              .watch<AnalysisEcgProvider>()
+              .ecgs["original"]!
+              .data
+              .isNotEmpty)
             Padding(
               padding: const EdgeInsets.all(20.0),
               child: SizedBox(height: 600, child: AnalysedPlot()),

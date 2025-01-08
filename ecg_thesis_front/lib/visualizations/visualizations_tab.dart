@@ -1,7 +1,8 @@
+// FILE: lib/visualizations/visualizations_tab.dart
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers.dart';
-import '../analysis/ecg_dropzone_plot.dart';
 import '../ecg_plot.dart';
 import '../control_panel.dart';
 
@@ -10,18 +11,23 @@ class VisualizationsTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ecgDataProvider = Provider.of<OriginalEcgProvider>(context);
-
     return Column(
       children: [
-        Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: ControlPanel(channelSelection: false),
+        Align(
+          alignment: Alignment.topCenter,
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: ControlPanel(
+                provider: AnalysisEcgProvider(), channelSelection: false),
+          ),
         ),
         Expanded(
-          child: ecgDataProvider.ecg.data.isEmpty
-              ? ECGDropzonePlot()
-              : Padding(
+          child: context
+                  .read<AnalysisEcgProvider>()
+                  .ecgs["original"]!
+                  .data
+                  .isNotEmpty
+              ? Padding(
                   padding: const EdgeInsets.all(20.0),
                   child: GridView.builder(
                     gridDelegate:
@@ -29,18 +35,32 @@ class VisualizationsTab extends StatelessWidget {
                       crossAxisCount: 4,
                       childAspectRatio: 2,
                     ),
-                    itemCount: ecgDataProvider.ecg.data.first.keys.length,
+                    itemCount: context
+                        .read<AnalysisEcgProvider>()
+                        .ecgs["original"]!
+                        .data
+                        .first
+                        .keys
+                        .length,
                     itemBuilder: (context, index) {
-                      String channel = ecgDataProvider
-                          .ecg.header.channelHeaders.keys
+                      String channel = context
+                          .read<AnalysisEcgProvider>()
+                          .ecgs["original"]!
+                          .header
+                          .channelHeaders
+                          .keys
                           .elementAt(index);
                       return Padding(
                         padding: const EdgeInsets.all(8.0),
-                        child: ECGPlot(selectedChannel: channel),
+                        child: ECGPlot(
+                          provider: context.read<AnalysisEcgProvider>(),
+                          channel: channel,
+                        ),
                       );
                     },
                   ),
-                ),
+                )
+              : Container(),
         ),
       ],
     );

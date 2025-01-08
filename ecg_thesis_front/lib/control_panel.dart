@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'providers.dart';
 
 class ControlPanel extends StatelessWidget {
+  final EcgProvider provider;
   final bool channelSelection;
-  const ControlPanel({super.key, this.channelSelection = true});
+  const ControlPanel(
+      {super.key, required this.provider, this.channelSelection = true});
 
   @override
   Widget build(BuildContext context) {
@@ -12,27 +13,21 @@ class ControlPanel extends StatelessWidget {
       children: [
         ElevatedButton(
           onPressed: () {
-            context
-                .read<EcgPlotSettings>()
-                .setRange(2 * context.read<OriginalEcgProvider>().sampleRate);
+            provider.setRange(2 * provider.sampleRate);
           },
           child: Text('2s'),
         ),
         SizedBox(width: 8),
         ElevatedButton(
           onPressed: () {
-            context
-                .read<EcgPlotSettings>()
-                .setRange(4 * context.read<OriginalEcgProvider>().sampleRate);
+            provider.setRange(4 * provider.sampleRate);
           },
           child: Text('4s'),
         ),
         SizedBox(width: 8),
         ElevatedButton(
           onPressed: () {
-            context
-                .read<EcgPlotSettings>()
-                .setRange(8 * context.read<OriginalEcgProvider>().sampleRate);
+            provider.setRange(8 * provider.sampleRate);
           },
           child: Text('8s'),
         ),
@@ -40,7 +35,7 @@ class ControlPanel extends StatelessWidget {
         Text('Precision:'),
         const SizedBox(width: 8),
         DropdownButton<int>(
-          value: context.watch<EcgPlotSettings>().step,
+          value: provider.resolution,
           items: const [
             DropdownMenuItem(value: 1, child: Text('1/1')),
             DropdownMenuItem(value: 2, child: Text('1/2')),
@@ -51,18 +46,19 @@ class ControlPanel extends StatelessWidget {
           ],
           onChanged: (value) {
             if (value != null) {
-              context.read<EcgPlotSettings>().setStep(value);
+              provider.setStep(value);
             }
           },
         ),
+        const SizedBox(width: 8),
         if (channelSelection) ...[
           const SizedBox(width: 8),
-          _ChannelSelection(),
+          _ChannelSelection(provider: provider),
         ],
         const SizedBox(width: 8),
         ElevatedButton(
           onPressed: () {
-            context.read<EcgPlotSettings>().resetToDefault();
+            provider.resetToDefault();
           },
           child: Text('Reset'),
         ),
@@ -72,6 +68,9 @@ class ControlPanel extends StatelessWidget {
 }
 
 class _ChannelSelection extends StatelessWidget {
+  final EcgProvider provider;
+  const _ChannelSelection({required this.provider});
+
   @override
   Widget build(BuildContext context) {
     return Row(
@@ -80,13 +79,8 @@ class _ChannelSelection extends StatelessWidget {
         Text('Channel:'),
         const SizedBox(width: 8),
         DropdownButton<String>(
-          value: context.watch<EcgPlotSettings>().selectedChannel,
-          items: context
-              .read<OriginalEcgProvider>()
-              .ecg
-              .header
-              .channelHeaders
-              .keys
+          value: provider.channel,
+          items: provider.ecgs[provider.source]?.header.channelHeaders.keys
               .map<DropdownMenuItem<String>>((String channel) {
             return DropdownMenuItem<String>(
               value: channel,
@@ -95,7 +89,7 @@ class _ChannelSelection extends StatelessWidget {
           }).toList(),
           onChanged: (value) {
             if (value != null) {
-              context.read<EcgPlotSettings>().setSelectedChannel(value);
+              provider.setSelectedChannel(value);
             }
           },
         ),

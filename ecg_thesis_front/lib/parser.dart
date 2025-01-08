@@ -31,11 +31,6 @@ class Ecg {
           header.channelHeaders.keys.map((key) => dataRow[key]).toList();
       buffer.writeln(csvConverter.convert([row]));
     }
-
-    final bufferString = buffer.toString();
-    final lines = bufferString.split('\n');
-    final limitedOutput = lines.take(300).join('\n');
-    print(limitedOutput);
     return buffer.toString();
   }
 }
@@ -124,5 +119,30 @@ class ECGTxtParser {
     }
 
     return data;
+  }
+}
+
+class QRS {
+  final int Q;
+  final int R;
+  final int S;
+
+  QRS(this.Q, this.R, this.S);
+
+  @override
+  String toString() {
+    return 'Q: $Q, R: $R, S: $S';
+  }
+}
+
+class QRSParser {
+  List<QRS> parse(List<dynamic> jsonList) {
+    final List<QRS> qrsList = [];
+    for (var item in jsonList) {
+      final Map<String, dynamic> qrsMap = jsonDecode(item);
+      qrsList.add(QRS(qrsMap['Q'], qrsMap['R'], qrsMap['S']));
+    }
+
+    return qrsList;
   }
 }
